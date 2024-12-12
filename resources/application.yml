@@ -1,0 +1,36 @@
+spring:
+  application:
+  name: spring
+  mvc:
+    pathmatch:
+      matching-strategy:
+        ant_path_matcher
+  datasource:
+    url: jdbc:mysql://ls-2d048cddbf5c7dc34a6a15703950f16370ffcaee.cdue48seeu9d.ap-northeast-2.rds.amazonaws.com:3306/coin?serverTimezone=UTC&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: dbmasteruser
+    password: 12345678
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+
+openai:
+  api:
+    key: "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"
+    organization: "org-nK8ZvKguKGud2ChYPyJldzbr"
+    project:
+      id: "proj_irdAiqZQ4h6BUUwCfPjBt563"
+  
+
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace

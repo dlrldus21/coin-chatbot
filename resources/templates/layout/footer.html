@@ -1,0 +1,47 @@
+<footer th:fragment="footerFragment" class="bg-dark text-light text-center mt-auto py-4">
+    <!-- Font Awesome CDN 추가 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- Bootstrap CDN (필요 시 추가) -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <div class="container px-5">
+        <div class="row">
+            <div class="col-12 col-md-4 mb-4 mb-md-0">
+                <h4 class="text-center">
+                    <a href="./index.html" class="link-light text-decoration-none d-flex justify-content-center align-items-center">
+                        <img th:src="@{/images/logo.png}" alt="로고" style="width: 50px; height: auto; margin-right: 1px;">
+                        <span style="font-size: 1.5rem; font-weight: bold; letter-spacing: 2px;">BiTiFNo</span>
+                    </a>
+                </h4>
+                <p class="pt-2 text-center">A place to explore the world of technology and coins.</p>
+            </div>
+            <div class="col-12 col-md-4 mb-4 mb-md-0">
+                <h5>Quick Links</h5>
+                <ul class="list-unstyled pt-2">
+                    <li><a href="#" class="link-light text-decoration-none">Home</a></li>
+                    <li><a href="#" class="link-light text-decoration-none">COIN</a></li>
+                    <li><a href="#" class="link-light text-decoration-none">CHAT</a></li>
+                    <li><a href="#" class="link-light text-decoration-none">Contact</a></li>
+                </ul>
+            </div>
+            <div class="col-12 col-md-4">
+                <h5>Contact Us</h5>
+                <p><i class="fas fa-envelope"></i> twoyoon91@naver.com</p>
+                <p><i class="fas fa-phone-alt"></i> 010-4928-4589</p>
+                <p><i class="fas fa-envelope"></i> zlfun21@naver.com</p>
+                <p><i class="fas fa-phone-alt"></i> 010-4088-4238</p>
+            </div>
+        </div>
+
+        <hr class="border-light">
+
+        <div class="d-sm-flex justify-content-between py-3">
+            <p>2023 © BiTiFNo. All Rights Reserved.</p>
+            <p>
+                <a href="#" class="link-light text-decoration-none">Terms of use</a> |
+                <a href="#" class="link-light text-decoration-none">Privacy policy</a>
+            </p>
+        </div>
+    </div>
+</footer>

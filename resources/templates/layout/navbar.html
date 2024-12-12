@@ -1,0 +1,52 @@
+<nav th:fragment="navbarFragment" class="navbar navbar-expand-md navbar-dark bg-secondary">  <!-- 네비게이션 바 정의 -->
+    <div class="container-fluid">  <!-- 네비게이션 바의 컨테이너 -->
+        <a class="navbar-brand logo-font text-white" href="/">  <!-- 로고와 브랜드 이름 링크 -->
+            <img src="/images/logo.png" alt="logo" width="50" height="50">BiTiNFo
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menubar" aria-controls="menubar" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>  <!-- 토글 버튼 아이콘 -->
+        </button>
+        <div class="collapse navbar-collapse" id="menubar">  <!-- 네비게이션 메뉴의 collapsible 부분 -->
+            <ul class="navbar-nav ms-auto mb-2 mb-md-0 align-items-center fw-bold">  <!-- 메뉴 항목 리스트 -->
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="/">Home</a>  <!-- 홈 링크 -->
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="/coin">Coin</a>  <!-- 관광지 링크 -->
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="/api/chat/index1">Chat</a>  <!-- 관광지 링크 -->
+                </li>
+                <li class="nav-item dropdown">  <!-- 드롭다운 메뉴 항목 -->
+                    <a class="nav-link dropdown-toggle active text-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        게시판  <!-- 드롭다운 메뉴 제목 -->
+                    </a>
+                    <ul class="dropdown-menu text-center">  <!-- 드롭다운 메뉴 내용 -->
+                        <li><a class="dropdown-item" href="/question/list">문의사항</a></li>  <!-- 문의 게시판 링크 -->
+                        <li><a class="dropdown-item" href="/board/list">자유 게시판</a></li>  <!-- 자유 게시판 링크 -->
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <div th:if="${loginMember == null}">  <!-- 로그인하지 않은 경우 -->
+                        <a class="nav-link active" th:href="@{/login}">Login</a>  <!-- 로그인 링크 -->
+                    </div>
+                    <div th:if="${loginMember}" class="me-2 py-2">  <!-- 로그인한 경우 -->
+                        <span class="p-2 text-end text-white" th:text="|${loginMember.name}님 환영합니다!|"></span>  <!-- 환영 메시지 -->
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <div th:if="${loginMember == null}">  <!-- 로그인하지 않은 경우 -->
+                        <a class="nav-link active" href="/add">Create Account</a>  <!-- 회원가입 링크 -->
+                    </div>
+                    <div th:if="${loginMember}" class="d-flex">  <!-- 로그인한 경우 -->
+                        <a href="/myPage" class="btn btn-outline-dark btn-sm text-white me-2">My Page</a>  <!-- 마이 페이지 링크 -->
+                        <a th:if="${loginMember.grade == 'admin'}" href="/members" class="btn btn-outline-dark btn-sm text-white">Member</a>
+                        <form class="text-start ms-2" th:action="@{/logout}" method="post">  <!-- 로그아웃 폼 -->
+                            <button class="btn btn-outline-dark btn-sm text-white">로그아웃</button>  <!-- 로그아웃 버튼 -->
+                        </form>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

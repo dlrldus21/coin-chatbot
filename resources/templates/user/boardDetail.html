@@ -1,0 +1,78 @@
+<html lang="ko" layout:decorate="~{layout/layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">  <!-- HTML 문서의 언어와 레이아웃 설정 -->
+<div class="container" layout:fragment="content">  <!-- 내용을 담는 컨테이너 -->
+    <div>
+        <div class="py-4 text-center">  <!-- 여백 및 텍스트 중앙 정렬 -->
+            <a class="fw-bold fs-2 text-decoration-none text-dark" th:href="@{/board/list}">자유 게시판</a>
+        </div>
+        <!-- 조회수 표시 -->
+        <div class="my-3">
+            <span th:text="'조회수: ' + ${board.viewCount}"></span>  <!-- 조회수 표시 -->
+        </div>
+        <!-- 게시물 제목, 동적으로 설정 -->
+        <div>
+            <h2 class="border-bottom py-2" th:text="${board.subject}"></h2>
+        </div>
+        <div class="card my-3">  <!-- 게시물 내용을 담는 카드 -->
+            <div class="card-body">
+                <div class="card-text" th:utext="${board.content}"></div>  <!-- 게시물 내용 -->
+                <div class="d-flex justify-content-end">  <!-- 오른쪽 정렬 -->
+                    <div class="badge bg-light text-dark p-2 text-start">  <!-- 작성자 및 작성 날짜 표시 -->
+                        <div class="mb-2"><span th:if="${board.author.loginId != null}" th:text="${board.author.loginId}">글쓴이</span></div>
+                        <div th:text="${#temporals.format(board.createDate, 'yyyy-MM-dd hh:mm')}"></div>  <!-- 작성 날짜 포맷 -->
+                    </div>
+                </div>
+                <!-- 질문 수정 버튼 추가 -->
+                <div class="my-3">
+                    <a th:href="@{|/board/modify/${board.id}|}" class="btn btn-sm btn-outline-secondary" th:if="${loginMember != null and loginMember.loginId == board.author.loginId}" th:text="수정">수정</a>  <!-- 수정 버튼, 조건부로 표시 -->
+                    <a href="javaScript:void(0);" th:data-url="@{|/board/delete/${board.id}|}" class="delete btn btn-sm btn-outline-secondary" th:if="${loginMember != null and (loginMember.loginId == board.author.loginId or loginMember.grade == 'admin')}" th:text="삭제">삭제</a>  <!-- 삭제 버튼, 조건부로 표시 -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 답변 개수 표시 -->
+    <h5 class="border-bottom my-3 py-2" th:text="|${#lists.size(board.boardAnswerList)}개의 답변이 있습니다|"></h5>  <!-- 답변 수 표시 -->
+    <!-- 답변 반복 시작 -->
+    <div class="card my-3" th:each="answer : ${board.boardAnswerList}">  <!-- 각 답변을 반복하여 카드 형태로 표시 -->
+        <div class="card-body">
+            <div class="card-text" th:utext="${answer.content}"></div>  <!-- 답변 내용 -->
+            <div class="d-flex justify-content-end">
+                <div class="badge bg-light text-dark p-2 text-start">  <!-- 작성자 및 작성 날짜 표시 -->
+                    <div class="mb-2"><span th:if="${answer.author.loginId != null}" th:text="${answer.author.loginId}">글쓴이</span></div>
+                    <div th:text="${#temporals.format(answer.createDate, 'yyyy-MM-dd hh:mm')}"></div>  <!-- 작성 날짜 포맷 -->
+                </div>
+            </div>
+            <!-- 답변 수정 버튼 추가 -->
+            <div class="my-3">
+                <a th:href="@{|/boardanswer/modify/${answer.id}|}" class="btn btn-sm btn-outline-secondary" th:if="${loginMember != null and loginMember.loginId == answer.author.loginId}" th:text="수정">수정</a>  <!-- 답변 수정 버튼, 조건부로 표시 -->
+                <a th:href="@{|/boardanswer/delete/${answer.id}|}" class="btn btn-sm btn-outline-secondary" th:if="${loginMember != null and (loginMember.loginId == answer.author.loginId or loginMember.grade == 'admin')}" th:text="삭제">삭제</a>  <!-- 답변 삭제 버튼, 조건부로 표시 -->
+            </div>
+        </div>
+    </div>
+    <!-- 답변 등록 폼 -->
+    <form method="post" th:action="@{/boardanswer/create/{id} (id=${board.id})}" class="my-3" th:object="${boardAnswerForm}">  <!-- 답변을 등록하는 폼 -->
+        <div class="alert alert-danger" role="alert" th:if="${#fields.hasAnyErrors()}">  <!-- 폼 오류가 있는 경우 경고 메시지 표시 -->
+            <div th:each="err : ${#fields.allErrors()}" th:text="${err}"></div>  <!-- 모든 오류 메시지 출력 -->
+        </div>
+        <textarea th:field="*{content}" class="form-control" required></textarea>  <!-- 답변 내용을 입력하는 텍스트 영역 -->
+
+        <div class="d-flex justify-content-end">
+            <input th:if="${loginMember}" type="submit" value="등록하기" class="btn btn-secondary my-2">  <!-- 제출 버튼 -->
+            <a th:if="${loginMember == null}" th:href="@{/login}" th:onclick="showLoginAlert()" class="btn btn-secondary my-2">등록하기</a>  <!-- 제출 버튼 -->
+        </div>
+    </form>
+</div>
+<script layout:fragment="script">  <!-- 스크립트 섹션 -->
+$(function () {  // jQuery 문서 준비 이벤트
+    $(".delete").on('click', function () {  // 삭제 버튼 클릭 이벤트
+        if (confirm("정말로 삭제하시겠습니까?")) {  // 삭제 확인 팝업
+            location.href = $(this).attr('data-url')  // 확인 시 삭제 URL로 이동
+        }
+    })
+});
+</script>
+</html>
+<script>
+    function showLoginAlert() {
+        alert("로그인 후 답변을 등록할 수 있습니다.");
+    }
+</script>

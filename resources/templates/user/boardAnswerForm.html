@@ -1,0 +1,20 @@
+<html lang="ko" layout:decorate="~{layout/layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">  <!-- HTML 문서의 언어와 레이아웃 설정 -->
+<div class="container max600" layout:fragment="content">  <!-- 내용이 들어갈 컨테이너, max600 클래스로 최대 폭 설정 -->
+    <div class="py-5 text-center">  <!-- 여백 및 텍스트 정렬 -->
+        <a class="fw-bold fs-2 text-decoration-none text-dark" th:href="@{/board/list}">자유 게시판</a>
+    </div>
+    <form method="post" th:object="${boardAnswerForm}">  <!-- POST 방식으로 데이터를 전송하는 폼, boardAnswerForm 객체와 바인딩 -->
+        <div th:if="${#fields.hasAnyErrors()}" class="alert alert-danger" role="alert">  <!-- 오류가 있는 경우 경고 메시지 표시 -->
+            <div th:each="err : ${#fields.allErrors()}" th:text="${err}"></div>  <!-- 모든 오류 메시지를 반복하여 출력 -->
+        </div>
+        <div class="mb-3">  <!-- 폼 요소의 아래쪽 여백 설정 -->
+            <label th:for="content">내용</label>  <!-- 내용 입력 필드에 대한 레이블 -->
+            <textarea th:field="*{content}" class="form-control" rows="10"></textarea>  <!-- 내용 입력을 위한 텍스트 영역 -->
+        </div>
+        <div class="d-flex justify-content-end">
+            <input type="submit" value="등록하기" class="btn btn-secondary my-2">  <!-- 제출 버튼 -->
+        </div>
+    </form>
+</div>
+</html>
+

@@ -1,0 +1,39 @@
+<html lang="ko" layout:decorate="~{layout/layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<div layout:fragment="content">
+    <div class="d-flex align-items-center justify-content-center min-vh-100" style="background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.65)), url(/images/coin.jpg); background-size: cover;">
+        <!-- 중앙 정렬을 위한 Flexbox 설정, 배경 이미지 및 그라디언트 적용 -->
+        <form th:object="${loginForm}" method="post" class="border-expanded rounded p-5 w-100 text-light" style="background-color:rgb(32, 37, 56); max-width: 600px;">
+            <!-- 로그인 폼 -->
+            <div th:if="${#fields.hasGlobalErrors()}">  <!-- 전체 오류 메시지가 있는 경우 -->
+                <p class="field-error" th:each="err : ${#fields.globalErrors()}" th:text="${err}">전체 오류 메시지</p>  <!-- 오류 메시지 반복 출력 -->
+            </div>
+            <div class="row py-3">  <!-- 상단 버튼 및 제목을 위한 행 -->
+                <h1 class="pb-5 fw-bold col-9" style="font-size: 30px;">Login</h1>  <!-- 제목 -->
+                <div class="col-3 py-3 text-center">  <!-- 회원가입 버튼 영역 -->
+                    <a class="text-center text-decoration-none text-light" th:href="@{/add}">회원가입</a>  <!-- 회원가입 링크 -->
+                </div>
+            </div>
+            <div class="mb-3">  <!-- 아이디 입력 필드 -->
+                <label th:for="loginId" class="form-label">Id</label>  <!-- 아이디 레이블 -->
+                <input type="text" class="form-control" th:field="*{loginId}" th:errorclass="field-error">  <!-- 아이디 입력 필드 -->
+                <div class="field-error" th:errors="*{loginId}"></div>  <!-- 아이디 오류 메시지 -->
+            </div>
+            <div class="mb-3">  <!-- 비밀번호 입력 필드 -->
+                <label th:for="password" class="form-label">password</label>  <!-- 비밀번호 레이블 -->
+                <input type="password" class="form-control" th:field="*{password}" th:errorclass="field-error">  <!-- 비밀번호 입력 필드 -->
+                <div class="field-error" th:errors="*{password}"></div>  <!-- 비밀번호 오류 메시지 -->
+            </div>
+            <div class="row py-3">  <!-- 로그인 및 취소 버튼을 위한 행 -->
+                <div class="col-6 py-3">  <!-- 로그인 버튼 영역 -->
+                    <input type="hidden" name="referer" value="${referer}">
+                    <button class="w-100 btn btn-secondary" type="submit">로그인</button>  <!-- 제출 버튼 -->
+                </div>
+                <div class="col-6 py-3">  <!-- 취소 버튼 영역 -->
+                    <button class="w-100 btn btn-secondary" type="button" th:onclick="history.back()">취소</button>  <!-- 취소 버튼 -->
+                </div>
+            </div>
+
+        </form>
+    </div>
+</div>
+</html>

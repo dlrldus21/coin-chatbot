@@ -1,0 +1,260 @@
+<html lang="ko" layout:decorate="~{layout/layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<div layout:fragment="content" class="container">
+    <div class="my-5">
+        <h2>가상화폐 검색 및 비교</h2>
+        <div class="input-group">
+            <input type="text" id="searchInput" class="form-control" placeholder="암호화폐를 검색하세요..." oninput="filterCoins()">
+        </div>
+    </div>
+    <div class="row my-5">
+        <div id="mainWrapper" class="col-md-4">
+            <div id="coinListWrapper" class="mb-4">
+                <h2>가상화폐 목록</h2>
+                <ul id="coinList" class="list-group" style="max-height: 730px; overflow-y: auto;">
+                    <!-- 암호화폐 리스트가 동적으로 추가됩니다. -->
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <h2>가상화폐 정보</h2>
+            <div class="row coin-info-container">
+                <div class="coin-info col-md-6">
+                    <p id="coinInfo">비트코인 정보를 불러오는 중...</p>
+                </div>
+                <div class="bithumb-info col-md-6">
+                    <p id="bithumbInfo">빗썸 데이터를 불러오는 중...</p>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="timeframe-buttons">
+                    <button class="btn btn-sm btn-secondary" onclick="updateCoinCandles('5')">5분</button>
+                    <button class="btn btn-sm btn-secondary" onclick="updateCoinCandles('10')">10분</button>
+                    <button class="btn btn-sm btn-secondary" onclick="updateCoinCandles('15')">15분</button>
+                    <button class="btn btn-sm btn-secondary" onclick="updateCoinCandles('30')">30분</button>
+                    <button class="btn btn-sm btn-secondary" onclick="updateCoinCandles('60')">1시간</button>
+                </div>
+                <canvas id="priceChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+</html>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let chart;
+    let currentMarket = 'KRW-BTC'; // 기본 비트코인
+    let currentInterval = null; // setInterval ID 저장
+    const coinListElement = document.getElementById('coinList');
+    const coinInfoElement = document.getElementById('coinInfo');
+    const bithumbInfoElement = document.getElementById('bithumbInfo');
+    const priceChartElement = document.getElementById('priceChart');
+    let previousPrice = null; // 이전 가격 저장
+    let previousPrice1 = null;
+    let allCoins = []; // 모든 암호화폐 목록 저장
+    const API_BASE_URL = '/api/crypto';
+    const BITHUMB_API_BASE_URL = 'https://api.bithumb.com/public/ticker';
+
+    async function fetchAPI(url) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            console.error(error);
+            alert(`데이터를 가져오는 중 오류가 발생했습니다: ${error.message}`);
+        }
+    }
+
+    // 암호화폐 목록 불러오기
+    async function fetchMarketList() {
+        const markets = await fetchAPI(`${API_BASE_URL}/markets`);
+
+        if (markets) {
+            allCoins = markets;
+            renderCoinList(allCoins);
+            const bitcoinMarket = allCoins.find(coin => coin.market === 'KRW-BTC');
+            if (bitcoinMarket) selectCoin(bitcoinMarket);
+        }
+    }
+
+    // 선택한 암호화폐 정보 업데이트
+    async function selectCoin(market) {
+        if (!market || !market.market) {
+            alert('잘못된 시장 데이터입니다.');
+            return;
+        }
+
+        document.querySelectorAll('#coinList .list-group-item').forEach(item => item.classList.remove('active'));
+        const selectedItem = Array.from(coinListElement.children).find(item => item.textContent === market.korean_name);
+        if (selectedItem) selectedItem.classList.add('active');
+
+        currentMarket = market.market;
+        previousPrice = null;
+
+        updateCoinData();
+        updateCoinCandles();
+        updateBithumbData(market.market.split('-')[1]); // 빗썸 데이터 업데이트
+
+        if (currentInterval) clearInterval(currentInterval);
+        currentInterval = setInterval(() => {
+            updateCoinData();
+            updateBithumbData(market.market.split('-')[1]);
+        }, 1000);
+    }
+
+    // 코인 데이터 업데이트
+    async function updateCoinData() {
+        const coinData = await fetchAPI(`${API_BASE_URL}/ticker?market=${currentMarket}`);
+
+        if (!coinData) {
+            console.error('코인 데이터를 가져오지 못했습니다.');
+            return;
+        }
+
+        const {
+            trade_price: currentPrice,
+            high_price,
+            low_price,
+            trade_volume,
+            acc_trade_volume_24h,
+            change_price,
+            change_rate
+        } = coinData;
+
+        const priceChange = previousPrice !== null ? currentPrice - previousPrice : 0;
+        const priceClass = priceChange > 0 ? 'price-increase' : priceChange < 0 ? 'price-decrease' : '';
+
+        coinInfoElement.innerHTML = `
+            <div class="info-text">
+                <h4>업비트 데이터</h4>
+                <strong>${coinData.market}</strong><br>
+                <strong>현재가:</strong> <span class="price ${priceClass}">${currentPrice.toLocaleString()} KRW</span><br>
+                <strong>변동량:</strong> ${priceChange.toLocaleString()} KRW <strong>24시간 변동률:</strong> ${(change_rate * 100).toFixed(2)}%<br>
+                <strong>24시간 거래량:</strong> ${acc_trade_volume_24h.toFixed(2)}<br>
+                <strong>24시간 변동량:</strong> ${change_price.toLocaleString()} KRW<br>
+                <strong>고가:</strong> ${high_price.toLocaleString()} KRW
+                <strong>저가:</strong> ${low_price.toLocaleString()} KRW
+            </div>
+        `;
+
+        previousPrice = currentPrice;
+    }
+
+    async function updateBithumbData(ticker) {
+        const bithumbData = await fetchAPI(`${BITHUMB_API_BASE_URL}/${ticker}`);
+
+        if (!bithumbData || !bithumbData.data) {
+            console.error('빗썸 데이터를 가져오지 못했습니다.');
+            return;
+        }
+
+        const {
+            closing_price,
+            max_price,
+            min_price,
+            units_traded_24H,
+            prev_closing_price,
+            fluctate_24H,
+            fluctate_rate_24H
+        } = bithumbData.data;
+
+        const priceChange = previousPrice1 !== null ? closing_price - previousPrice1 : 0;
+        const priceClass = priceChange > 0 ? 'price-increase' : priceChange < 0 ? 'price-decrease' : '';
+
+        bithumbInfoElement.innerHTML = `
+        <div class="info-text">
+            <h4>빗썸 데이터</h4><br>
+            <strong>현재가:</strong> <span class="price ${priceClass}">${parseFloat(closing_price).toLocaleString()} KRW</span><br>
+            <strong>24시간 변동률:</strong> ${parseFloat(fluctate_rate_24H).toFixed(2)}%<br>
+            <strong>24시간 거래량:</strong> ${parseFloat(units_traded_24H).toFixed(2)}<br>
+            <strong>24시간 변동량:</strong> ${parseFloat(fluctate_24H).toLocaleString()} KRW<br>
+            <strong>고가:</strong> ${parseFloat(max_price).toLocaleString()} KRW
+            <strong>저가:</strong> ${parseFloat(min_price).toLocaleString()} KRW
+
+        </div>
+    `;
+
+        previousPrice1 = closing_price;
+    }
+
+    // 차트 업데이트
+    async function updateCoinCandles(timeframe = '5') {
+        const type = timeframe === 'day' ? 'day' : 'minute';
+        const candles = await fetchAPI(`${API_BASE_URL}/candles?market=${currentMarket}&type=${type}&timeframe=${timeframe}&count=10`);
+
+        if (!candles) {
+            console.error('캔들 데이터를 가져오지 못했습니다.');
+            return;
+        }
+
+        const labels = candles.map(candle => {
+            const date = new Date(candle.timestamp);
+            return type === 'day'
+                ? `${date.getMonth() + 1}/${date.getDate()}`
+                : `${date.getHours()}:${date.getMinutes()}`;
+        }).reverse();
+
+        const prices = candles.map(candle => candle.trade_price).reverse();
+
+        drawChart(labels, prices);
+    }
+
+    // 차트 그리기
+    function drawChart(labels, prices) {
+        const data = {
+            labels,
+            datasets: [{
+                label: '가격',
+                data: prices,
+                fill: true,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+                tension: 0.4
+            }]
+        };
+
+        if (chart) chart.destroy();
+        chart = new Chart(priceChartElement, {
+            type: 'line',
+            data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {position: 'top'},
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: 'white',
+                        bodyColor: 'white'
+                    }
+                },
+                scales: {
+                    y: {beginAtZero: false},
+                    x: {}
+                }
+            }
+        });
+    }
+
+    // 검색창 필터링
+    function filterCoins() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const filteredCoins = allCoins.filter(coin => coin.korean_name.toLowerCase().includes(query));
+        renderCoinList(filteredCoins);
+    }
+
+    // 코인 목록 렌더링
+    function renderCoinList(coins) {
+        coinListElement.innerHTML = '';
+        coins.forEach(market => {
+            const listItem = document.createElement('li');
+            listItem.className = 'list-group-item';
+            listItem.textContent = market.korean_name;
+            listItem.onclick = () => selectCoin(market);
+            coinListElement.appendChild(listItem);
+        });
+    }
+
+    fetchMarketList();
+</script>

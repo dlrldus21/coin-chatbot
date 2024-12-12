@@ -1,0 +1,23 @@
+<html lang="ko" layout:decorate="~{layout/layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<div class="container max600" layout:fragment="content">  <!-- 최대 너비 600px의 콘텐츠 영역 -->
+    <div class="py-5 text-center">  <!-- 수직 여백과 텍스트 중앙 정렬 -->
+        <a class="fw-bold fs-2 text-decoration-none text-dark" th:href="@{/question/list}">문의 사항</a>  <!-- 페이지 제목 -->
+    </div>
+    <form th:object="${questionForm}" method="post">  <!-- 질문 등록을 위한 폼, POST 방식으로 전송 -->
+        <div th:if="${#fields.hasAnyErrors()}" class="alert alert-danger" role="alert">  <!-- 오류 메시지를 표시할 영역 -->
+            <div th:each="err : ${#fields.allErrors()}" th:text="${err}"></div>  <!-- 모든 오류 메시지 출력 -->
+        </div>
+        <div class="mb-3">  <!-- 제목 입력 필드 -->
+            <label th:for="subject" class="fs-5 fw-bold">제목</label>  <!-- 제목 레이블 -->
+            <input type="text" class="form-control" th:field="*{subject}">  <!-- 제목 입력창 -->
+        </div>
+        <div class="mb-3">  <!-- 내용 입력 필드 -->
+            <label th:for="content" class="fs-5 fw-bold">내용</label>  <!-- 내용 레이블 -->
+            <textarea rows="10" class="form-control" th:field="*{content}">{{questionForm.content}}</textarea>  <!-- 내용 입력창, 10행 크기 -->
+        </div>
+        <div class="d-flex justify-content-end">
+            <input type="submit" value="등록하기" class="btn btn-secondary my-2">  <!-- 제출 버튼 -->
+        </div>
+    </form>
+</div>
+</html>

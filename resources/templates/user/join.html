@@ -1,0 +1,51 @@
+<html lang="ko" layout:decorate="~{layout/layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<div layout:fragment="content">
+    <div class="d-flex align-items-center justify-content-center min-vh-100" style="background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.65)), url(/images/coin.jpg); background-size: cover;">
+        <!-- 중앙 정렬을 위한 Flexbox 설정, 배경 이미지 및 그라디언트 적용 -->
+        <form class="border-expanded rounded p-5 w-100 text-light" style="background-color:rgb(32, 37, 56); max-width: 600px;" th:action th:object="${memberForm}" method="post">
+            <!-- 회원가입 폼 -->
+            <h1 class="pb-5 fw-bold" style="font-size: 30px">Create Account</h1>  <!-- 제목 -->
+            <div class="mb-3">
+                <label for="loginId" class="form-label margin-top-5">Id</label>  <!-- 아이디 입력 레이블 -->
+                <input type="text" class="form-control" id="loginId" th:field="*{loginId}" th:errorclass="field-error">  <!-- 아이디 입력 필드 -->
+                <div class="field-error" th:errors="*{loginId}"></div>  <!-- 아이디 오류 메시지 -->
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>  <!-- 비밀번호 입력 레이블 -->
+                <input type="password" class="form-control" id="password" th:field="*{password}" th:errorclass="field-error">  <!-- 비밀번호 입력 필드 -->
+                <div class="field-error" th:errors="*{password}"></div>  <!-- 비밀번호 오류 메시지 -->
+            </div>
+            <!-- 비밀번호 확인 필드(주석 처리됨)
+            <div class="mb-3">
+                <label for="confirmPassword" class="form-label">비밀번호 확인</label>
+                <input type="password" class="form-control" id="confirmPassword" placeholder="비밀번호를 다시 입력하세요" aria-label="비밀번호 확인">
+            </div>
+            -->
+            <div class="mb-3">
+                <label for="name" class="form-label">Name</label>  <!-- 이름 입력 레이블 -->
+                <input type="text" class="form-control" id="name" th:field="*{name}" th:errorclass="field-error">  <!-- 이름 입력 필드 -->
+                <div class="field-error" th:errors="*{name}"></div>  <!-- 이름 오류 메시지 -->
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">E-mail</label>  <!-- 이메일 입력 레이블 -->
+                <input type="email" class="form-control" id="email" th:field="*{email}" th:errorclass="field-error">  <!-- 이메일 입력 필드 -->
+                <div class="field-error" th:errors="*{email}"></div>  <!-- 이메일 오류 메시지 -->
+            </div>
+            <div class="mb-3">
+                <label for="phone" class="form-label">Phone</label>  <!-- 전화번호 입력 레이블 -->
+                <input type="text" class="form-control" id="phone" th:field="*{phone}" th:errorclass="field-error">  <!-- 전화번호 입력 필드 -->
+                <div class="field-error" th:errors="*{phone}"></div>  <!-- 전화번호 오류 메시지 -->
+            </div>
+            <div class="row py-3">  <!-- 버튼을 위한 행 -->
+                <div class="col-6 py-3">  <!-- 다음 버튼 영역 -->
+                    <button class="w-100 btn btn-secondary" type="submit">회원가입</button>  <!-- 제출 버튼 -->
+                </div>
+                <div class="col-6 py-3">  <!-- 취소 버튼 영역 -->
+                    <button class="w-100 btn btn-secondary" type="button" th:onclick="history.back()">취소</button>  <!-- 취소 버튼 -->
+                </div>
+            </div>
+
+        </form>
+    </div>
+</div>
+</html>

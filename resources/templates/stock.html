@@ -1,0 +1,194 @@
+<html lang="ko" layout:decorate="~{layout/layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<div layout:fragment="content" class="container">
+    <div id="header">
+        <input type="text" id="searchInput" placeholder="주식을 검색하세요..." oninput="filterStocks()">
+    </div>
+
+    <div id="mainWrapper">
+        <div id="coinListWrapper">
+            <h2>주식 목록</h2>
+            <ul id="coinList">
+                <!-- 주식 목록이 동적으로 추가됩니다. -->
+            </ul>
+        </div>
+
+        <div class="coin-info">
+            <h2>선택한 주식 정보</h2>
+            <p id="coinInfo">주식 정보를 불러오는 중...</p>
+            <div class="chart-container">
+                <canvas id="priceChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+</html>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    let chart;
+    let currentStock = '005930';  // 삼성전자 기본값
+    let currentInterval = null;
+    const stockListElement = document.getElementById('coinList');
+    const stockInfoElement = document.getElementById('coinInfo');
+    const priceChartElement = document.getElementById('priceChart');
+    let selectedListItem = null;
+    let allStocks = [];  // 모든 주식 목록을 저장
+
+    // 주식 목록을 가져오는 함수
+    async function fetchStockList() {
+        const url = 'https://finance.naver.com/sise/sise_market_sum.nhn?sosok=0&page=1';  // 첫 페이지 URL
+
+        try {
+            const response = await axios.get(url);
+            const data = response.data;
+
+            // 주식 목록을 추출하는 정규 표현식
+            const stockRegex = /<a href="\/item\/main.nhn\?code=(\d{6})" class="tltle">([^<]+)<\/a>/g;
+            let match;
+            while (match = stockRegex.exec(data)) {
+                const stockCode = match[1];
+                const stockName = match[2];
+                allStocks.push({ code: stockCode, name: stockName });
+            }
+
+            renderStockList(allStocks);
+        } catch (error) {
+            console.error("Error fetching stock list:", error);
+        }
+    }
+
+    // 주식 리스트 렌더링
+    function renderStockList(stocks) {
+        stockListElement.innerHTML = '';
+
+        stocks.forEach(stock => {
+            const listItem = document.createElement('li');
+            listItem.textContent = stock.name;
+            listItem.onclick = function() {
+                if (selectedListItem) {
+                    selectedListItem.classList.remove('selected');
+                }
+                listItem.classList.add('selected');
+                selectedListItem = listItem;
+
+                currentStock = stock.code;
+                fetchStockData(stock.code);
+                fetchStockCandles(stock.code);
+
+                if (currentInterval) {
+                    clearInterval(currentInterval); // 기존의 interval 제거
+                }
+                currentInterval = setInterval(() => fetchStockData(stock.code), 1000);  // 1초마다 갱신
+            };
+            stockListElement.appendChild(listItem);
+        });
+    }
+
+    // 주식 데이터를 가져오는 함수
+    async function fetchStockData(stockCode) {
+        const url = `https://finance.naver.com/item/main.nhn?code=${stockCode}`;
+
+        try {
+            const response = await axios.get(url);
+            const data = response.data;
+
+            const currentPriceMatch = data.match(/"현재가">([^<]+)<\/strong>/);
+            const highPriceMatch = data.match(/"상한가">([^<]+)<\/strong>/);
+            const lowPriceMatch = data.match(/"하한가">([^<]+)<\/strong>/);
+            const volumeMatch = data.match(/거래량<\/dt><dd class="blind">([^<]+)<\/dd>/);
+
+            if (currentPriceMatch) {
+                const currentPrice = currentPriceMatch[1].replace(',', '');
+                const highPrice = highPriceMatch ? highPriceMatch[1] : 'N/A';
+                const lowPrice = lowPriceMatch ? lowPriceMatch[1] : 'N/A';
+                const volume = volumeMatch ? volumeMatch[1] : 'N/A';
+
+                stockInfoElement.innerHTML = `
+                        <strong>주식 코드:</strong> ${stockCode}<br>
+                        <strong>현재가:</strong> ${currentPrice} 원<br>
+                        <strong>상한가:</strong> ${highPrice} 원 <strong>하한가:</strong> ${lowPrice} 원<br>
+                        <strong>거래량:</strong> ${volume} 주
+                    `;
+            }
+
+        } catch (error) {
+            console.error("Error fetching stock data:", error);
+        }
+    }
+
+    // 주식 차트 데이터를 가져오는 함수 (캔들 차트)
+    async function fetchStockCandles(stockCode) {
+        const url = `https://finance.naver.com/item/sise_day.nhn?code=${stockCode}`;
+
+        try {
+            const response = await axios.get(url);
+            const data = response.data;
+            const candleData = extractCandleData(data);
+
+            drawChart(candleData.labels, candleData.prices);
+        } catch (error) {
+            console.error("Error fetching stock candles:", error);
+        }
+    }
+
+    function extractCandleData(data) {
+        const labels = [];
+        const prices = [];
+
+        const regex = /<tr><td class="date">([^<]+)<\/td><td class="num">([\d,]+)<\/td>/g;
+        let match;
+        while (match = regex.exec(data)) {
+            const date = match[1];
+            const price = match[2].replace(',', '');
+            labels.push(date);
+            prices.push(price);
+        }
+
+        return { labels, prices };
+    }
+
+    // 차트 그리기 함수
+    function drawChart(labels, prices) {
+        const data = {
+            labels: labels,
+            datasets: [{
+                label: '주식 가격',
+                data: prices,
+                fill: false,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                tension: 0.1
+            }]
+        };
+
+        if (chart) {
+            chart.destroy();  // 기존 차트가 있으면 제거
+        }
+
+        chart = new Chart(priceChartElement, {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: false
+                    }
+                }
+            }
+        });
+    }
+
+    // 검색 필터링 함수
+    function filterStocks() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const filteredStocks = allStocks.filter(stock =>
+            stock.name.toLowerCase().includes(query)
+        );
+        renderStockList(filteredStocks);
+    }
+
+    // 페이지 로딩 시 주식 목록을 가져옴
+    fetchStockList();
+</script>

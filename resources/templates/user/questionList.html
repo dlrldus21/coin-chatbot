@@ -1,0 +1,140 @@
+<html lang="ko" layout:decorate="~{layout/layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<div class="container" layout:fragment="content">  <!-- 콘텐츠를 담는 컨테이너 -->
+  <div class="py-5 text-center">  <!-- 수직 여백과 중앙 정렬 -->
+    <a class="fw-bold fs-2 text-decoration-none text-dark" th:href="@{/question/list}">문의 사항</a>  <!-- 페이지 제목 -->
+  </div>
+  <div class="mb-3 container-fluid d-flex justify-content-end">
+    <div class="input-group w-50">  <!-- 입력 그룹을 위한 div -->
+      <input type="text" id="search_kw" class="form-control shadow" th:value="${kw}">  <!-- 검색어 입력 필드 -->
+      <button class="btn btn-secondary shadow fw-bolder" type="button" id="btn_search">찾기</button>  <!-- 검색 버튼 -->
+    </div>
+  </div>
+  <table class="table table-hover table-light border border-dark border-2 p-3 text-center table-borderless table-striped container-fluid">  <!-- 질문 목록을 표시하는 테이블 -->
+    <thead class="table-dark opacity-75">  <!-- 테이블 헤더 -->
+    <tr>
+      <th>번호</th>  <!-- 게시글 번호 -->
+      <th class="text-start">제목</th>  <!-- 게시글 제목 -->
+      <th>Id</th>  <!-- 작성자 -->
+      <th>작성일</th>  <!-- 작성일 -->
+    </tr>
+    </thead>
+    <tbody>
+    <!-- 공지사항-->
+    <tr th:if="${questions != null}" th:each="question : ${questions}">
+      <td>
+        <span th:if="${question.isNotice}" class="badge bg-warning">공지</span>
+      </td>
+      <td class="text-start">
+        <a class="text-decoration-none text-danger fw-bold mobile-title" th:href="@{/question/detail/{id} (id=${question.id})}" th:text="${question.subject}"></a>
+      </td>
+      <td>
+        <span class="mobile-author" th:text="${question.author.loginId}"></span>
+      </td>
+      <td th:text="${#temporals.format(question.createDate, 'yyyy-MM-dd')}"></td>
+    </tr>
+    <!-- paging이 null인 경우와 목록이 비어있는 경우를 처리 -->
+    <tr th:if="${paging == null}">  <!-- 페이징 정보가 없을 경우 -->
+      <td colspan="4" class="text-center">질문이 없습니다.</td>  <!-- 질문이 없다는 메시지 -->
+    </tr>
+    <tr th:if="${paging != null}" th:each="question, loop : ${paging}">  <!-- 페이징 정보가 있을 경우 질문 목록 반복 -->
+      <td th:text="${paging.getTotalElements() - (paging.number * paging.size) - loop.index}"></td>  <!-- 질문 번호 -->
+      <td class="text-start">
+        <a th:href="@{/question/detail/{id} (id=${question.id})}" th:text="${question.subject}" class="text-decoration-none text-dark fw-bold mobile-title" th:data-author-id="${question.author.loginId}" th:data-login-id="${loginMember != null ? loginMember.loginId : 'null'}" th:data-is-admin="${loginMember != null && loginMember.grade == 'admin'}" th:onclick="return checkAccessPermission(event)"></a>
+        <span class="text-danger small ms-2" th:if="${#lists.size(question.questionAnswerList) > 0}" th:text="${#lists.size(question.questionAnswerList)}">댓글수</span>  <!-- 댓글 수 표시 -->
+      </td>
+      <td><span class="mobile-author" th:if="${question.author.loginId != null}" th:text="${question.author.loginId}"></span></td>  <!-- 글쓴이 ID 표시 -->
+      <td th:text="${#temporals.format(question.createDate,'yyyy-MM-dd')}"></td>  <!-- 작성일시 포맷팅 -->
+    </tr>
+    </tbody>
+  </table>
+  <!-- 검색 입력 영역 -->
+    <div class="d-flex justify-content-end mb-3">  <!-- 문의 등록 및 검색 영역 -->
+      <div th:if="${loginMember}">
+        <a th:href="@{/question/create}" class="btn btn-secondary fw-bolder">게시글 등록하기</a>
+        <a th:if="${loginMember.grade == 'admin'}" th:href="@{/question/notice}" class="btn btn-secondary fw-bolder">공지사항 등록하기</a>  <!-- 공지사항등록 버튼 영역-->
+      </div>
+      <div>
+        <a th:if="${loginMember == null}" th:href="@{/login}" th:onclick="showLoginAlert()" class="btn btn-secondary fw-bolder">게시글 등록하기</a>
+      </div>
+    </div>
+  <!-- 페이징 처리 시작 -->
+  <div th:if="${paging != null}">  <!-- 페이징 정보가 있을 경우 -->
+    <ul class="pagination justify-content-center">  <!-- 중앙 정렬된 페이징 리스트 -->
+      <li class="page-item" th:classappend="${!paging.hasPrevious()}?'disabled'">  <!-- 이전 페이지 버튼 -->
+        <a class="page-link" href="javascript:void(0)" th:data-page="${paging.number-1}">이전</a>
+      </li>
+      <li class="page-item" th:each="page : ${#numbers.sequence(0, paging.totalPages-1)}" th:classappend="${page == paging.number} ? 'active'" th:if="${page >= paging.number-5 and page <= paging.number+5}">
+        <a class="page-link" th:text="${page+1}" href="javascript:void(0)" th:data-page="${page}"></a>  <!-- 현재 페이지와 가까운 페이지만 표시 -->
+      </li>
+      <li class="page-item" th:classappend="${!paging.hasNext()} ? 'disabled'">  <!-- 다음 페이지 버튼 -->
+        <a class="page-link" href="javascript:void(0)" th:data-page="${paging.number+1}">다음</a>
+      </li>
+    </ul>
+  </div>
+  <!-- 페이징 처리 끝 -->
+  <!-- 검색 폼 -->
+  <form th:action="@{/question/list}" method="get" id="searchForm">  <!-- 검색 폼 -->
+    <input type="hidden" id="kw" name="kw" th:value="${kw}">  <!-- 검색 키워드 숨겨진 입력 -->
+    <input type="hidden" id="page" name="page" th:value="${paging != null ? paging.number : 0}">  <!-- 현재 페이지 정보 숨겨진 입력, null일 경우 0 -->
+  </form>
+</div>
+<script layout:fragment="script">
+  $(function() {
+    // 페이지 링크 클릭 이벤트 (이전, 다음 버튼)
+    $(".page-link").on('click', function () {
+      $('#page').val($(this).data('page'));  // 클릭한 페이지 번호 설정
+      $('#searchForm').submit();  // 폼 제출
+    });
+
+    // 검색 버튼 클릭 이벤트
+    $("#btn_search").on('click', function () {
+      $('#kw').val($('#search_kw').val());  // 검색어 설정
+      $('#page').val(0);  // 검색시 0페이지부터 시작
+      $('#searchForm').submit();  // 폼 제출
+    });
+
+    // 엔터키를 눌러도 검색할 수 있도록 처리
+    $('#search_kw').on('keypress', function(event) {
+      if (event.which == 13) {  // Enter 키 코드가 13
+        event.preventDefault();  // 기본 엔터키 폼 제출을 방지
+        $("#btn_search").click();  // 검색 버튼 클릭 이벤트 트리거
+      }
+    });
+
+    // 엔터키를 눌러 페이지 이동 처리
+    $(document).on('keypress', '.page-link', function(event) {
+      if (event.which == 13) {  // Enter 키 코드가 13
+        event.preventDefault();  // 기본 동작 방지
+        $(this).click();  // 해당 페이지 링크 클릭 이벤트 트리거
+      }
+    });
+  });
+</script>
+
+
+</html>
+<script>
+  function showLoginAlert() {
+    alert("로그인 후 게시글을 등록할 수 있습니다.");
+  }
+
+  function checkAccessPermission(event) {
+    // 클릭한 요소에서 작성자와 로그인한 사용자의 ID를 가져옴
+    const questionAuthorId = event.target.getAttribute('data-author-id');
+    const loginId = event.target.getAttribute('data-login-id');
+    const isAdmin = event.target.getAttribute('data-is-admin') === 'true';
+
+    // 로그인하지 않은 경우 (loginId가 'null'일 경우)
+    if ((loginId === 'null' || loginId !== questionAuthorId) && !isAdmin) {
+      // 경고창 표시
+      alert("이 글에 접근할 권한이 없습니다.");
+      // 페이지 이동을 막기 위해 기본 동작을 취소
+      event.preventDefault();
+      return false;  // false를 리턴하여 이동을 막습니다.
+    }
+
+    // 권한이 있는 경우 정상적으로 링크를 열도록 허용
+    return true;
+  }
+</script>
+
